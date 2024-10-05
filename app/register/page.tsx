@@ -1,21 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import {useState} from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import {registerUser} from "@/app/api";
-import {toast} from "@/hooks/use-toast";
+import {useRouter} from 'next/navigation'
+import {Button} from "@/components/ui/button"
+import {Input} from "@/components/ui/input"
+import {Textarea} from "@/components/ui/textarea"
+import {Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter} from "@/components/ui/card"
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter} from "@/components/ui/dialog"
+import {Label} from "@/components/ui/label"
+import {Checkbox} from "@/components/ui/checkbox"
+import {registerUser} from "@/app/api"
+import {toast} from "@/hooks/use-toast"
 
 export default function RegisterPage() {
-    const [userData, setUserData] = useState({ username: '', email: '', password: '', confirmPassword: '' })
+    const [userData, setUserData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        isHealthcareProvider: false,
+        background: ''
+    })
     const [isLoading, setIsLoading] = useState(false)
+    const [showBackgroundModal, setShowBackgroundModal] = useState(false)
     const router = useRouter()
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setUserData({ ...userData, [e.target.id]: e.target.value })
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setUserData({...userData, [e.target.id]: e.target.value})
+    }
+
+    const handleCheckboxChange = (checked: boolean) => {
+        setUserData({...userData, isHealthcareProvider: checked})
+        if (checked) {
+            setShowBackgroundModal(true)
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -28,20 +47,28 @@ export default function RegisterPage() {
             })
             return
         }
+        if (userData.isHealthcareProvider && !userData.background) {
+            toast({
+                title: "Error",
+                description: "Please provide your background information",
+                variant: "destructive",
+            })
+            return
+        }
         setIsLoading(true)
         try {
             const data = await registerUser({
                 username: userData.username,
                 email: userData.email,
-                password: userData.password
+                password: userData.password,
+                background: userData.background
             })
             toast({
                 title: "Success",
                 description: "Registered successfully",
             })
-            // Store the token in localStorage or a more secure place
             localStorage.setItem('token', data.access_token)
-            router.push('/dashboard') // Redirect to dashboard or home page
+            router.push('/dashboard')
         } catch (error) {
             toast({
                 title: "Error",
@@ -102,6 +129,14 @@ export default function RegisterPage() {
                                     required
                                 />
                             </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="isHealthcareProvider"
+                                    checked={userData.isHealthcareProvider}
+                                    onCheckedChange={handleCheckboxChange}
+                                />
+                                <Label htmlFor="isHealthcareProvider">I am a healthcare provider</Label>
+                            </div>
                         </div>
                         <CardFooter className="flex flex-col space-y-4 px-0 pt-4">
                             <Button className="w-full" type="submit" disabled={isLoading}>
@@ -119,6 +154,28 @@ export default function RegisterPage() {
                     </div>
                 </CardFooter>
             </Card>
+
+            <Dialog open={showBackgroundModal} onOpenChange={setShowBackgroundModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Healthcare Provider Background</DialogTitle>
+                        <DialogDescription>
+                            Please provide detailed information about your background, life experience, and anything
+                            that could be relevant to helping individuals at risk of suicide.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Textarea
+                        id="background"
+                        value={userData.background}
+                        onChange={handleChange}
+                        placeholder="Enter your background information here..."
+                        className="min-h-[200px]"
+                    />
+                    <DialogFooter>
+                        <Button onClick={() => setShowBackgroundModal(false)}>Save</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

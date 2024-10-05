@@ -273,7 +273,7 @@ export default function Dashboard() {
                             <ul className="space-y-4">
                                 {messages.map((message, index) => (
                                     <li key={index} className="p-4 border rounded bg-gray-50">
-                                        {message.content} ({message.classification})
+                                        {message.content}
                                     </li>
                                 ))}
                             </ul>

@@ -17,7 +17,7 @@ export async function loginUser(credentials: { username?: string; email?: string
     return response.json();
 }
 
-export async function registerUser(userData: { username: string; email: string; password: string }) {
+export async function registerUser(userData: { password: string; background: string; email: string; username: string }) {
     const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
