@@ -13,7 +13,7 @@ export default function LandingPage() {
             <main className="flex-grow">
                 <section className="py-20 px-4">
                     <div className="container mx-auto text-center">
-                        <h1 className="text-4xl font-bold mb-6">Welcome to Shelth</h1>
+                        <h1 className="text-4xl font-bold mb-6">Welcome to sHealth</h1>
                         <p className="text-xl mb-8 max-w-2xl mx-auto">
                             Empowering mental health professionals with AI-assisted suicide risk assessment
                         </p>
@@ -30,7 +30,7 @@ export default function LandingPage() {
 
                 <section className="py-16 bg-muted">
                     <div className="container mx-auto px-4">
-                        <h2 className="text-3xl font-bold text-center mb-12">How Shelth Works</h2>
+                        <h2 className="text-3xl font-bold text-center mb-12">How sHealth Works</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             <Card>
                                 <CardHeader>
@@ -74,7 +74,7 @@ export default function LandingPage() {
 
                 <section className="py-20 px-4">
                     <div className="container mx-auto">
-                        <h2 className="text-3xl font-bold text-center mb-12">Why Choose Shelth?</h2>
+                        <h2 className="text-3xl font-bold text-center mb-12">Why Choose sHealth?</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <Card>
                                 <CardHeader>
@@ -116,7 +116,7 @@ export default function LandingPage() {
                     <div className="container mx-auto text-center">
                         <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
                         <p className="text-xl mb-8 max-w-2xl mx-auto">
-                            Join Shelth today and enhance your ability to identify and respond to suicide risks effectively.
+                            Join sHealth today and enhance your ability to identify and respond to suicide risks effectively.
                         </p>
                         <Button asChild size="lg" variant="secondary">
                             <Link href="/register">Sign Up Now</Link>
@@ -127,7 +127,7 @@ export default function LandingPage() {
 
             <footer className="bg-muted py-6">
                 <div className="container mx-auto px-4 text-center">
-                    <p>&copy; 2024 Shelth. All rights reserved.</p>
+                    <p>&copy; 2024 sHealth. All rights reserved.</p>
                 </div>
             </footer>
         </div>

@@ -1,32 +1,61 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { InfoIcon, AlertTriangle, AlertCircle } from 'lucide-react'
+import { InfoIcon, AlertTriangle, AlertCircle, Send, Trash2, PlusCircle, XCircle } from 'lucide-react'
 import Navbar from "@/components/navbar"
-import { sendMessage, askAI } from "@/app/api"
+import { sendMessage, sendChatMessage, getChatHistory, clearChatHistory } from "@/app/api"
+import { useEffect, useRef, useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface Message {
     content: string
     classification: string
 }
 
+interface ChatMessage {
+    role: 'user' | 'assistant'
+    content: string
+}
+
 export default function Dashboard() {
     const [messages, setMessages] = useState<Message[]>([])
     const [classification, setClassification] = useState<string | null>(null)
-    const [aiResponse, setAiResponse] = useState<string | null>(null)
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+    const [chatInput, setChatInput] = useState('')
+    const [currentMessage, setCurrentMessage] = useState('')
+    const [attachInfo, setAttachInfo] = useState(false)
+    const chatInputRef = useRef<HTMLTextAreaElement>(null)
     const router = useRouter()
 
     useEffect(() => {
         const token = localStorage.getItem('token')
         if (!token) {
             router.push('/login')
+        } else {
+            fetchChatHistory()
         }
     }, [router])
+
+    useEffect(() => {
+        if (chatInputRef.current) {
+            chatInputRef.current.style.height = 'auto'
+            chatInputRef.current.style.height = `${chatInputRef.current.scrollHeight}px`
+        }
+    }, [chatInput])
+
+    const fetchChatHistory = async () => {
+        try {
+            const history = await getChatHistory()
+            setChatMessages(history)
+        } catch (error) {
+            console.error('Error fetching chat history:', error)
+        }
+    }
 
     const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
@@ -38,6 +67,7 @@ export default function Dashboard() {
             const data = await sendMessage(message)
             setClassification(data.classification)
             setMessages(prev => [...prev, { content: message, classification: data.classification }])
+            setCurrentMessage(message)
         } catch (error) {
             console.error('Error sending message:', error)
         }
@@ -45,20 +75,53 @@ export default function Dashboard() {
         form.reset()
     }
 
-    const handleAskAI = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleSendChatMessage = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        const form = event.currentTarget
-        const formData = new FormData(form)
-        const question = formData.get('question') as string
+        if (!chatInput.trim()) return
+
+        const newUserMessage: ChatMessage = { role: 'user', content: chatInput }
+        setChatMessages(prev => [...prev, newUserMessage])
+
+        const exchange = messages.map(m => `${m.content} (${m.classification})`).join('\n')
 
         try {
-            const data = await askAI(question)
-            setAiResponse(data.response)
+            const data = await sendChatMessage(
+                chatInput,
+                (chatMessages.length === 0 || attachInfo) ? exchange : '',
+                (chatMessages.length === 0 || attachInfo) ? classification || '' : ''
+            )
+            const newAssistantMessage: ChatMessage = { role: 'assistant', content: data.response }
+            setChatMessages(prev => [...prev, newAssistantMessage])
+            setAttachInfo(false)
         } catch (error) {
-            console.error('Error asking AI:', error)
+            console.error('Error sending chat message:', error)
         }
 
-        form.reset()
+        setChatInput('')
+    }
+
+    const handleClearChat = async () => {
+        try {
+            await clearChatHistory()
+            setChatMessages([])
+        } catch (error) {
+            console.error('Error clearing chat history:', error)
+        }
+    }
+
+    const handleInsertLastClassification = async () => {
+        if (classification && currentMessage) {
+            setAttachInfo(true)
+        } else if (currentMessage) {
+            try {
+                const data = await sendMessage(currentMessage)
+                setClassification(data.classification)
+                setMessages(prev => [...prev, { content: currentMessage, classification: data.classification }])
+                setAttachInfo(true)
+            } catch (error) {
+                console.error('Error getting classification:', error)
+            }
+        }
     }
 
     const getAlertVariant = (classification: string) => {
@@ -156,21 +219,67 @@ export default function Dashboard() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Ask AI</CardTitle>
-                        <CardDescription>Ask the AI any question related to suicide prevention.</CardDescription>
+                        <CardTitle>AI Chat</CardTitle>
+                        <CardDescription>Chat with the AI about suicide prevention and risk assessment.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleAskAI}>
-                            <Textarea name="question" placeholder="Enter your question here..." className="mb-4" />
-                            <Button type="submit">Ask AI</Button>
-                        </form>
-                        {aiResponse && (
-                            <div className="mt-4 p-4 border rounded bg-gray-50">
-                                <h3 className="font-bold">AI Response:</h3>
-                                <p>{aiResponse}</p>
+                        <div className="h-[400px] overflow-y-auto mb-4 p-4 border rounded">
+                            {chatMessages.map((msg, index) => (
+                                <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                                    <span className={`inline-block p-2 rounded ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                                        {msg.content}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        <form onSubmit={handleSendChatMessage} className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                                <Textarea
+                                    ref={chatInputRef}
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    placeholder="Type your message here..."
+                                    className="flex-grow"
+                                />
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button type="button" size="icon" onClick={handleInsertLastClassification}>
+                                                <PlusCircle className="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Attach last classification</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                <Button type="submit" size="icon">
+                                    <Send className="h-4 w-4" />
+                                </Button>
                             </div>
-                        )}
+                            {attachInfo && (
+                                <div className="flex items-center space-x-2">
+                                    <Badge variant="secondary">
+                                        Classification attached
+                                    </Badge>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setAttachInfo(false)}
+                                    >
+                                        <XCircle className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </form>
                     </CardContent>
+                    <CardFooter>
+                        <Button variant="outline" onClick={handleClearChat}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Clear Chat
+                        </Button>
+                    </CardFooter>
                 </Card>
 
                 <Card>
