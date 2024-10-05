@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { InfoIcon, AlertTriangle, AlertCircle, Send, Trash2, PlusCircle, XCircle } from 'lucide-react'
+import { InfoIcon, AlertTriangle, AlertCircle, Send, Trash2, PlusCircle } from 'lucide-react'
 import Navbar from "@/components/navbar"
 import { sendMessage, sendChatMessage, getChatHistory, clearChatHistory } from "@/app/api"
 import { useEffect, useRef, useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import ReactMarkdown from 'react-markdown'
 
 interface Message {
     content: string
@@ -87,8 +86,8 @@ export default function Dashboard() {
         try {
             const data = await sendChatMessage(
                 chatInput,
-                (chatMessages.length === 0 || attachInfo) ? exchange : '',
-                (chatMessages.length === 0 || attachInfo) ? classification || '' : ''
+                attachInfo ? exchange : '',
+                attachInfo ? classification || '' : ''
             )
             const newAssistantMessage: ChatMessage = { role: 'assistant', content: data.response }
             setChatMessages(prev => [...prev, newAssistantMessage])
@@ -112,12 +111,14 @@ export default function Dashboard() {
     const handleInsertLastClassification = async () => {
         if (classification && currentMessage) {
             setAttachInfo(true)
+            alert('The exchange and classification have been attached to your next request.')
         } else if (currentMessage) {
             try {
                 const data = await sendMessage(currentMessage)
                 setClassification(data.classification)
                 setMessages(prev => [...prev, { content: currentMessage, classification: data.classification }])
                 setAttachInfo(true)
+                alert('The exchange and classification have been attached to your next request.')
             } catch (error) {
                 console.error('Error getting classification:', error)
             }
@@ -171,10 +172,10 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-gradient-to-b from-background to-secondary flex flex-col">
             <Navbar />
-            <div className="container mx-auto p-6 space-y-6">
-                <Card>
+            <div className="container mx-auto p-6 space-y-6 flex-grow">
+                <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
                     <CardHeader>
                         <CardTitle>Welcome to the Suicide Prevention System</CardTitle>
                         <CardDescription>
@@ -185,7 +186,7 @@ export default function Dashboard() {
                 </Card>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
+                    <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
                         <CardHeader>
                             <CardTitle>Message Input</CardTitle>
                             <CardDescription>Enter patient messages here for classification.</CardDescription>
@@ -193,12 +194,12 @@ export default function Dashboard() {
                         <CardContent>
                             <form onSubmit={handleSendMessage}>
                                 <Textarea name="message" placeholder="Enter message here..." className="mb-4" />
-                                <Button type="submit">Send Message</Button>
+                                <Button type="submit" className="bg-primary hover:bg-primary/90">Send Message</Button>
                             </form>
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
                         <CardHeader>
                             <CardTitle>Classification</CardTitle>
                             <CardDescription>AI-generated classification of the input message.</CardDescription>
@@ -217,7 +218,7 @@ export default function Dashboard() {
                     </Card>
                 </div>
 
-                <Card>
+                <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
                     <CardHeader>
                         <CardTitle>AI Chat</CardTitle>
                         <CardDescription>Chat with the AI about suicide prevention and risk assessment.</CardDescription>
@@ -226,52 +227,32 @@ export default function Dashboard() {
                         <div className="h-[400px] overflow-y-auto mb-4 p-4 border rounded">
                             {chatMessages.map((msg, index) => (
                                 <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                                    <span className={`inline-block p-2 rounded ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
-                                        {msg.content}
-                                    </span>
+                                    {msg.role === 'user' ? (
+                                        <span className="inline-block p-2 rounded bg-primary text-primary-foreground">
+                                            {msg.content}
+                                        </span>
+                                    ) : (
+                                        <span className="inline-block p-2 rounded bg-secondary text-secondary-foreground markdown">
+                                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                        </span>
+                                    )}
                                 </div>
                             ))}
                         </div>
-                        <form onSubmit={handleSendChatMessage} className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                                <Textarea
-                                    ref={chatInputRef}
-                                    value={chatInput}
-                                    onChange={(e) => setChatInput(e.target.value)}
-                                    placeholder="Type your message here..."
-                                    className="flex-grow"
-                                />
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button type="button" size="icon" onClick={handleInsertLastClassification}>
-                                                <PlusCircle className="h-4 w-4" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Attach last classification</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <Button type="submit" size="icon">
-                                    <Send className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            {attachInfo && (
-                                <div className="flex items-center space-x-2">
-                                    <Badge variant="secondary">
-                                        Classification attached
-                                    </Badge>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setAttachInfo(false)}
-                                    >
-                                        <XCircle className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            )}
+                        <form onSubmit={handleSendChatMessage} className="flex items-center space-x-2">
+                            <Textarea
+                                ref={chatInputRef}
+                                value={chatInput}
+                                onChange={(e) => setChatInput(e.target.value)}
+                                placeholder="Type your message here..."
+                                className="flex-grow"
+                            />
+                            <Button type="button" size="icon" onClick={handleInsertLastClassification}>
+                                <PlusCircle className="h-4 w-4" />
+                            </Button>
+                            <Button type="submit" size="icon">
+                                <Send className="h-4 w-4" />
+                            </Button>
                         </form>
                     </CardContent>
                     <CardFooter>
@@ -282,7 +263,7 @@ export default function Dashboard() {
                     </CardFooter>
                 </Card>
 
-                <Card>
+                <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
                     <CardHeader>
                         <CardTitle>Classification History</CardTitle>
                         <CardDescription>Review the history of classified exchanges.</CardDescription>
@@ -292,8 +273,7 @@ export default function Dashboard() {
                             <ul className="space-y-4">
                                 {messages.map((message, index) => (
                                     <li key={index} className="p-4 border rounded bg-gray-50">
-                                        <p><strong>Exchange:</strong> {message.content}</p>
-                                        <p><strong>Classification:</strong> {message.classification}</p>
+                                        {message.content} ({message.classification})
                                     </li>
                                 ))}
                             </ul>
