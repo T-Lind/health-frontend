@@ -1,8 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# sHealth Frontend
 
-## Getting Started
+## Overview
 
-First, run the development server:
+Welcome to the sHealth Frontend project! This project is designed to provide an intuitive interface for mental health professionals to interact with the sHealth system. It features a dashboard for message input, AI-powered classification, and chat functionalities to assist in suicide risk assessment.
+
+## Directory
+
+- [Features](#features)
+- [Installation & Running](#installation--running)
+- [Technologies Used](#technologies-used)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+- **User-Friendly Dashboard**: Allows easy input of patient messages and displays AI-generated classifications.
+- **AI Chat**: Facilitates conversations with an AI to discuss suicide prevention and risk assessment.
+- **Classification History**: Keeps track of previously classified messages for review.
+- **Responsive Design**: Ensures a seamless experience across different devices.
+
+Here's the homepage & dashboard:
+![](readme-images/homepage.png)
+![](readme-images/dashboard.png)
+
+
+## Installation & Running
 
 ```bash
 npm run dev
@@ -16,21 +38,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Technologies Used
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **TypeScript**
+- **React**
+- **Next.js**
+- **Tailwind CSS**
+- **Framer Motion**
+- **Lucide Icons**
 
-## Learn More
+## Contributing
 
-To learn more about Next.js, take a look at the following resources:
+We welcome contributions! Please read our [contributing guidelines](CONTRIBUTING.md) for more details.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
