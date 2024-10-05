@@ -51,14 +51,15 @@ export async function sendMessage(message: string) {
     return response.json();
 }
 
-export async function sendChatMessage(message: string, context: string) {
+// Update the sendChatMessage function in `app/api.ts`
+export async function sendChatMessage(message: string, exchange: string, classification: string) {
     const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ message, context }),
+        body: JSON.stringify({ message, exchange, classification }),
     });
 
     if (!response.ok) {
@@ -67,6 +68,7 @@ export async function sendChatMessage(message: string, context: string) {
 
     return response.json();
 }
+
 
 export async function getChatHistory() {
     const response = await fetch(`${API_BASE_URL}/chat-history`, {
