@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { InfoIcon, AlertTriangle, AlertCircle, Send, Trash2, PlusCircle } from 'lucide-react'
+import {InfoIcon, AlertTriangle, AlertCircle, Send, Trash2, X, PaperclipIcon} from 'lucide-react'
 import Navbar from "@/components/navbar"
 import { sendMessage, sendChatMessage, getChatHistory, clearChatHistory } from "@/app/api"
 import { useEffect, useRef, useState } from "react"
@@ -27,7 +27,7 @@ export default function Dashboard() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
     const [chatInput, setChatInput] = useState('')
     const [currentMessage, setCurrentMessage] = useState('')
-    const [attachInfo, setAttachInfo] = useState(false)
+    const [attachedInfo, setAttachedInfo] = useState<Message | null>(null)
     const chatInputRef = useRef<HTMLTextAreaElement>(null)
     const router = useRouter()
 
@@ -37,6 +37,7 @@ export default function Dashboard() {
             router.push('/login')
         } else {
             fetchChatHistory()
+            loadMessagesFromLocalStorage()
         }
     }, [router])
 
@@ -56,6 +57,17 @@ export default function Dashboard() {
         }
     }
 
+    const loadMessagesFromLocalStorage = () => {
+        const storedMessages = localStorage.getItem('classifiedMessages')
+        if (storedMessages) {
+            setMessages(JSON.parse(storedMessages))
+        }
+    }
+
+    const saveMessagesToLocalStorage = (newMessages: Message[]) => {
+        localStorage.setItem('classifiedMessages', JSON.stringify(newMessages))
+    }
+
     const handleSendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         const form = event.currentTarget
@@ -64,8 +76,11 @@ export default function Dashboard() {
 
         try {
             const data = await sendMessage(message)
+            const newMessage = { content: message, classification: data.classification }
+            const updatedMessages = [...messages, newMessage]
+            setMessages(updatedMessages)
+            saveMessagesToLocalStorage(updatedMessages)
             setClassification(data.classification)
-            setMessages(prev => [...prev, { content: message, classification: data.classification }])
             setCurrentMessage(message)
         } catch (error) {
             console.error('Error sending message:', error)
@@ -81,17 +96,15 @@ export default function Dashboard() {
         const newUserMessage: ChatMessage = { role: 'user', content: chatInput }
         setChatMessages(prev => [...prev, newUserMessage])
 
-        const exchange = messages.map(m => `${m.content} (${m.classification})`).join('\n')
-
         try {
             const data = await sendChatMessage(
                 chatInput,
-                attachInfo ? exchange : '',
-                attachInfo ? classification || '' : ''
+                attachedInfo ? attachedInfo.content : '',
+                attachedInfo ? attachedInfo.classification : ''
             )
             const newAssistantMessage: ChatMessage = { role: 'assistant', content: data.response }
             setChatMessages(prev => [...prev, newAssistantMessage])
-            setAttachInfo(false)
+            setAttachedInfo(null)
         } catch (error) {
             console.error('Error sending chat message:', error)
         }
@@ -108,21 +121,18 @@ export default function Dashboard() {
         }
     }
 
-    const handleInsertLastClassification = async () => {
-        if (classification && currentMessage) {
-            setAttachInfo(true)
-            alert('The exchange and classification have been attached to your next request.')
-        } else if (currentMessage) {
-            try {
-                const data = await sendMessage(currentMessage)
-                setClassification(data.classification)
-                setMessages(prev => [...prev, { content: currentMessage, classification: data.classification }])
-                setAttachInfo(true)
-                alert('The exchange and classification have been attached to your next request.')
-            } catch (error) {
-                console.error('Error getting classification:', error)
-            }
-        }
+    const handleAttachMessage = (message: Message) => {
+        setAttachedInfo(message)
+    }
+
+    const handleCancelAttach = () => {
+        setAttachedInfo(null)
+    }
+
+    const handleDeleteMessage = (index: number) => {
+        const updatedMessages = messages.filter((_, i) => i !== index)
+        setMessages(updatedMessages)
+        saveMessagesToLocalStorage(updatedMessages)
     }
 
     const getAlertVariant = (classification: string) => {
@@ -174,18 +184,8 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-background to-secondary flex flex-col">
             <Navbar />
-            <div className="container mx-auto p-6 space-y-6 flex-grow">
-                <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
-                    <CardHeader>
-                        <CardTitle>Welcome to the Suicide Prevention System</CardTitle>
-                        <CardDescription>
-                            This dashboard allows you to input patient messages, receive AI-powered classifications,
-                            and get insights to assist in suicide risk assessment.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="container mx-auto p-6 flex-grow flex">
+                <div className="w-1/2 pr-3 space-y-6">
                     <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
                         <CardHeader>
                             <CardTitle>Message Input</CardTitle>
@@ -216,72 +216,108 @@ export default function Dashboard() {
                             )}
                         </CardContent>
                     </Card>
+
+                    <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
+                        <CardHeader>
+                            <CardTitle>Classification History</CardTitle>
+                            <CardDescription>Review the history of classified exchanges.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {messages.length > 0 ? (
+                                <ul className="space-y-4">
+                                    {messages.map((message, index) => (
+                                        <li key={index} className="p-4 border rounded bg-gray-50">
+                                            <div className="mb-2">
+                                                <p className="font-medium">{message.content}</p>
+                                                <p className="text-sm text-gray-500">Classification: {message.classification}</p>
+                                            </div>
+                                            <div className="flex justify-between items-center mt-2">
+                                                <Button
+                                                    onClick={() => handleAttachMessage(message)}
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="flex items-center"
+                                                >
+                                                    <PaperclipIcon className="h-4 w-4 mr-2" />
+                                                    Attach
+                                                </Button>
+                                                <Button
+                                                    onClick={() => handleDeleteMessage(index)}
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    className="flex items-center"
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p>No messages classified yet.</p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
 
-                <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
-                    <CardHeader>
-                        <CardTitle>AI Chat</CardTitle>
-                        <CardDescription>Chat with the AI about suicide prevention and risk assessment.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-[400px] overflow-y-auto mb-4 p-4 border rounded">
-                            {chatMessages.map((msg, index) => (
-                                <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                                    {msg.role === 'user' ? (
-                                        <span className="inline-block p-2 rounded bg-primary text-primary-foreground">
-                                            {msg.content}
-                                        </span>
-                                    ) : (
-                                        <span className="inline-block p-2 rounded bg-secondary text-secondary-foreground markdown">
-                                            <ReactMarkdown>{msg.content}</ReactMarkdown>
-                                        </span>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                        <form onSubmit={handleSendChatMessage} className="flex items-center space-x-2">
-                            <Textarea
-                                ref={chatInputRef}
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                placeholder="Type your message here..."
-                                className="flex-grow"
-                            />
-                            <Button type="button" size="icon" onClick={handleInsertLastClassification}>
-                                <PlusCircle className="h-4 w-4" />
-                            </Button>
-                            <Button type="submit" size="icon">
-                                <Send className="h-4 w-4" />
-                            </Button>
-                        </form>
-                    </CardContent>
-                    <CardFooter>
-                        <Button variant="outline" onClick={handleClearChat}>
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Clear Chat
-                        </Button>
-                    </CardFooter>
-                </Card>
-
-                <Card className="bg-card hover:bg-card/90 transition-colors duration-300">
-                    <CardHeader>
-                        <CardTitle>Classification History</CardTitle>
-                        <CardDescription>Review the history of classified exchanges.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {messages.length > 0 ? (
-                            <ul className="space-y-4">
-                                {messages.map((message, index) => (
-                                    <li key={index} className="p-4 border rounded bg-gray-50">
-                                        {message.content}
-                                    </li>
+                <div className="w-1/2 pl-3">
+                    <Card className="bg-card hover:bg-card/90 transition-colors duration-300 h-full">
+                        <CardHeader>
+                            <CardTitle>AI Chat</CardTitle>
+                            <CardDescription>Chat with the AI about suicide prevention and risk assessment.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="h-[calc(100%-8rem)] flex flex-col">
+                            <div className="flex-grow overflow-y-auto mb-4 p-4 border rounded">
+                                {chatMessages.map((msg, index) => (
+                                    <div key={index} className={`mb-2 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
+                                        {msg.role === 'user' ? (
+                                            <span className="inline-block p-2 rounded bg-primary text-primary-foreground">
+                                                {msg.content}
+                                            </span>
+                                        ) : (
+                                            <span className="inline-block p-2 rounded bg-secondary text-secondary-foreground markdown">
+                                                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                            </span>
+                                        )}
+                                    </div>
                                 ))}
-                            </ul>
-                        ) : (
-                            <p>No messages classified yet.</p>
-                        )}
-                    </CardContent>
-                </Card>
+                            </div>
+                            {attachedInfo && (
+                                <Alert variant="info" className="mb-4">
+                                    <AlertTitle>Attached Information</AlertTitle>
+                                    <AlertDescription>
+                                        Message: {attachedInfo.content}
+                                        <br />
+                                        Classification: {attachedInfo.classification}
+                                    </AlertDescription>
+                                    <Button variant="ghost" size="sm" onClick={handleCancelAttach} className="absolute top-2 right-2">
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </Alert>
+                            )}
+                            <form onSubmit={handleSendChatMessage} className="flex items-center space-x-2">
+                                <Textarea
+                                    ref={chatInputRef}
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    placeholder="Type your message here..."
+                                    className="flex-grow"
+                                />
+                                <Button type="submit" size="icon">
+                                    <Send className="h-4 w-4" />
+                                </Button>
+                            </form>
+                        </CardContent>
+                        <CardFooter className="pb-14">
+                            <Button variant="outline" onClick={handleClearChat}>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Clear Chat
+                            </Button>
+
+                        </CardFooter>
+                    </Card>
+                </div>
             </div>
         </div>
     )
