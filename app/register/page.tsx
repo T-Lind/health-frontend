@@ -1,17 +1,17 @@
 'use client'
 
-import {useState} from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import {useRouter} from 'next/navigation'
-import {Button} from "@/components/ui/button"
-import {Input} from "@/components/ui/input"
-import {Textarea} from "@/components/ui/textarea"
-import {Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter} from "@/components/ui/card"
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter} from "@/components/ui/dialog"
-import {Label} from "@/components/ui/label"
-import {Checkbox} from "@/components/ui/checkbox"
-import {registerUser} from "@/app/api"
-import {toast} from "@/hooks/use-toast"
+import { useRouter } from 'next/navigation'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { registerUser } from "@/app/api"
+import { toast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
     const [userData, setUserData] = useState({
@@ -81,11 +81,11 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-            <Card className="w-[350px]">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
+            <Card className="w-[350px] bg-white border-blue-200 shadow-lg">
                 <CardHeader>
-                    <CardTitle>Register</CardTitle>
-                    <CardDescription>Create a new account to access the system.</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-blue-800">Register</CardTitle>
+                    <CardDescription className="text-blue-600">Create a new account to access the system.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit}>
@@ -97,6 +97,7 @@ export default function RegisterPage() {
                                     value={userData.username}
                                     onChange={handleChange}
                                     required
+                                    className="border-blue-200 focus:border-blue-400"
                                 />
                             </div>
                             <div className="flex flex-col space-y-1.5">
@@ -107,6 +108,7 @@ export default function RegisterPage() {
                                     value={userData.email}
                                     onChange={handleChange}
                                     required
+                                    className="border-blue-200 focus:border-blue-400"
                                 />
                             </div>
                             <div className="flex flex-col space-y-1.5">
@@ -117,6 +119,7 @@ export default function RegisterPage() {
                                     value={userData.password}
                                     onChange={handleChange}
                                     required
+                                    className="border-blue-200 focus:border-blue-400"
                                 />
                             </div>
                             <div className="flex flex-col space-y-1.5">
@@ -127,6 +130,7 @@ export default function RegisterPage() {
                                     value={userData.confirmPassword}
                                     onChange={handleChange}
                                     required
+                                    className="border-blue-200 focus:border-blue-400"
                                 />
                             </div>
                             <div className="flex items-center space-x-2">
@@ -134,21 +138,26 @@ export default function RegisterPage() {
                                     id="isHealthcareProvider"
                                     checked={userData.isHealthcareProvider}
                                     onCheckedChange={handleCheckboxChange}
+                                    className="border-blue-400 text-blue-600"
                                 />
-                                <Label htmlFor="isHealthcareProvider">I am a healthcare provider</Label>
+                                <Label htmlFor="isHealthcareProvider" className="text-blue-700">I am a healthcare provider</Label>
                             </div>
                         </div>
                         <CardFooter className="flex flex-col space-y-4 px-0 pt-4">
-                            <Button className="w-full" type="submit" disabled={isLoading}>
+                            <Button
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                                type="submit"
+                                disabled={isLoading}
+                            >
                                 {isLoading ? 'Registering...' : 'Register'}
                             </Button>
                         </CardFooter>
                     </form>
                 </CardContent>
                 <CardFooter className="flex flex-col space-y-4">
-                    <div className="text-sm text-center">
+                    <div className="text-sm text-center text-blue-600">
                         Already have an account?{" "}
-                        <Link href="/login" className="text-blue-500 hover:underline">
+                        <Link href="/login" className="text-blue-700 hover:underline font-semibold">
                             Login here
                         </Link>
                     </div>
@@ -156,10 +165,10 @@ export default function RegisterPage() {
             </Card>
 
             <Dialog open={showBackgroundModal} onOpenChange={setShowBackgroundModal}>
-                <DialogContent>
+                <DialogContent className="bg-white border-blue-200">
                     <DialogHeader>
-                        <DialogTitle>Healthcare Provider Background</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle className="text-blue-800">Healthcare Provider Background</DialogTitle>
+                        <DialogDescription className="text-blue-600">
                             Please provide detailed information about your background, life experience, and anything
                             that could be relevant to helping individuals at risk of suicide.
                         </DialogDescription>
@@ -169,10 +178,12 @@ export default function RegisterPage() {
                         value={userData.background}
                         onChange={handleChange}
                         placeholder="Enter your background information here..."
-                        className="min-h-[200px]"
+                        className="min-h-[200px] border-blue-200 focus:border-blue-400"
                     />
                     <DialogFooter>
-                        <Button onClick={() => setShowBackgroundModal(false)}>Save</Button>
+                        <Button onClick={() => setShowBackgroundModal(false)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                            Save
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

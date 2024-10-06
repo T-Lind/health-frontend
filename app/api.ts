@@ -51,7 +51,6 @@ export async function sendMessage(message: string) {
     return response.json();
 }
 
-// Update the sendChatMessage function in `app/api.ts`
 export async function sendChatMessage(message: string, exchange: string, classification: string) {
     const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
@@ -68,7 +67,6 @@ export async function sendChatMessage(message: string, exchange: string, classif
 
     return response.json();
 }
-
 
 export async function getChatHistory() {
     const response = await fetch(`${API_BASE_URL}/chat-history`, {
@@ -95,6 +93,23 @@ export async function clearChatHistory() {
 
     if (!response.ok) {
         throw new Error('Error clearing chat history');
+    }
+
+    return response.json();
+}
+
+export async function searchInteractions(query: string, numResults: number = 3) {
+    const response = await fetch(`${API_BASE_URL}/search-interactions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ query, num_results: numResults }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Error searching interactions');
     }
 
     return response.json();

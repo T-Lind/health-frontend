@@ -19,9 +19,9 @@ Welcome to the sHealth Frontend project! This project is designed to provide an 
 - **Classification History**: Keeps track of previously classified messages for review.
 - **Responsive Design**: Ensures a seamless experience across different devices.
 
-Here's the homepage & dashboard:
-![](readme-images/homepage.png)
-![](readme-images/dashboard.png)
+Watch the demo below:
+[![Watch the demo](readme-images/homepage.png)](https://drive.google.com/file/d/1NBvcfwC6Wu7oHaS7yORaTk3bm55qb1s3/view?usp=sharing)
+
 
 
 ## Installation & Running
